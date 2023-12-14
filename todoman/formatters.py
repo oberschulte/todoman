@@ -11,6 +11,7 @@ from datetime import tzinfo
 from time import mktime
 from typing import Iterable
 
+import itertools
 import click
 import humanize
 import parsedatetime
@@ -103,6 +104,14 @@ class DefaultFormatter(Formatter):
         # it can end up being more readable when too many columns are empty.
         # show dates that are in the future in yellow (in 24hs) or grey (future)
         table = []
+
+        todos, todos_copy = itertools.tee(todos, 2)
+        todo_id_max = max(list(todos_copy), key=lambda todo: todo.id, default=None)
+        if todo_id_max:
+            id_len = len(str(todo_id_max.id))
+        else:
+            id_len = 1
+
         for todo in todos:
             completed = "X" if todo.is_completed else " "
             percent = todo.percent_complete or ""
@@ -134,12 +143,10 @@ class DefaultFormatter(Formatter):
 
                 summary = f"{todo.summary} {self.format_database(todo.list)}{percent}"
 
-            # TODO: add spaces on the left based on max todos"
-
             # FIXME: double space when no priority
             # split into parts to satisfy linter line too long
             table.append(
-                f"[{completed}] {todo.id} {priority} {due} "
+                f"[{completed}] {todo.id:{id_len}} {priority} {due} "
                 f"{recurring}{summary}{categories}"
             )
 
